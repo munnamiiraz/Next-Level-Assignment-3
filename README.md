@@ -1,63 +1,102 @@
-# Vehicle Rental System - Database Assignment
+# Vehicle Rental System
 
-## Project Overview
+## About the Project
 
-This project implements a database system for managing vehicle rentals. The system handles users, vehicles, and booking information with proper relationships between tables.
+This is a database assignment for managing vehicle rentals. I created three tables - Users, Vehicles, and Bookings - to handle the rental system.
 
-## Database Structure
+## Database Tables
 
-The database consists of three main tables:
+**Users**
+- Stores user information like name, email, phone
+- Has role field for Admin or Customer
+- Email is unique for each user
 
-**Users Table**
-- Stores customer and admin information
-- Each user has a unique email address
-- Contains user role (Admin or Customer)
+**Vehicles**
+- Contains vehicle details (name, type, model)
+- Registration number is unique
+- Tracks if vehicle is available, rented, or in maintenance
 
-**Vehicles Table**
-- Stores information about available vehicles
-- Includes cars, bikes, and trucks
-- Tracks vehicle availability status
-- Each vehicle has a unique registration number
-
-**Bookings Table**
-- Records rental bookings
-- Links users with vehicles
-- Tracks booking dates and status
-- Stores total cost for each booking
+**Bookings**
+- Links users with vehicles they booked
+- Has start date, end date, and total cost
+- Status shows if booking is pending, confirmed, completed or cancelled
 
 ## Relationships
 
-- One user can make multiple bookings (1:N relationship)
-- One vehicle can have multiple bookings (1:N relationship)
-- Each booking belongs to one user and one vehicle
+Users and Bookings have 1:N relationship (one user can book multiple times)
+Vehicles and Bookings have 1:N relationship (one vehicle can be booked multiple times)
 
-## SQL Queries Explanation
+## Queries
 
-**Query 1: JOIN**
-This query retrieves all booking information along with the customer name and vehicle name. It uses INNER JOIN to combine data from three tables (Bookings, Users, and Vehicles) to show complete booking details.
+**Query 1 - JOIN**
+Gets booking details with customer name and vehicle name. I used INNER JOIN to connect Bookings table with Users and Vehicles tables.
 
-**Query 2: EXISTS**
-This query finds all vehicles that have never been booked. It uses NOT EXISTS to check if there are no matching records in the Bookings table for each vehicle.
+```sql
+SELECT 
+    b.booking_id,
+    u.name AS customer_name,
+    v.name AS vehicle_name,
+    b.start_date,
+    b.end_date,
+    b.status
+FROM Bookings b
+INNER JOIN Users u ON b.user_id = u.user_id
+INNER JOIN Vehicles v ON b.vehicle_id = v.vehicle_id;
+```
+Result: Shows all bookings with customer and vehicle names instead of just IDs
 
-**Query 3: WHERE**
-This query retrieves all available vehicles of a specific type. It uses WHERE clause with multiple conditions to filter vehicles by type (car) and availability status (available).
+**Query 2 - EXISTS**
+Finds vehicles that were never booked. Used NOT EXISTS to check if vehicle has no bookings.
 
-**Query 4: GROUP BY and HAVING**
-This query finds vehicles that have more than 2 bookings. It uses GROUP BY to group bookings by vehicle, COUNT to calculate total bookings, and HAVING to filter only vehicles with more than 2 bookings.
+```sql
+SELECT 
+    vehicle_id,
+    name,
+    type,
+    model,
+    registration_number,
+    rental_price,
+    status
+FROM Vehicles v
+WHERE NOT EXISTS (
+    SELECT 1 
+    FROM Bookings b 
+    WHERE b.vehicle_id = v.vehicle_id
+);
+```
+Result: Returns vehicles that have no booking records
+
+**Query 3 - WHERE**
+Gets available cars only. Used WHERE with two conditions - type must be car and status must be available.
+
+```sql
+SELECT 
+    vehicle_id,
+    name,
+    type,
+    model,
+    registration_number,
+    rental_price,
+    status
+FROM Vehicles
+WHERE type = 'car' AND status = 'available';
+```
+Result: Shows cars that are currently available for rent
+
+**Query 4 - GROUP BY and HAVING**
+Finds vehicles with more than 2 bookings. Used GROUP BY to group by vehicle, COUNT to count bookings, and HAVING to filter results.
+
+```sql
+SELECT 
+    v.name AS vehicle_name,
+    COUNT(b.booking_id) AS total_bookings
+FROM Vehicles v
+INNER JOIN Bookings b ON v.vehicle_id = b.vehicle_id
+GROUP BY v.vehicle_id, v.name
+HAVING COUNT(b.booking_id) > 2;
+```
+Result: Shows vehicles that have been booked more than 2 times
 
 ## How to Run
 
-1. Open any SQL database management tool
-2. Run the queries.sql file
-3. The file will create the database, tables, insert sample data, and execute all queries
-
-## Sample Data
-
-3 users, 4 vehicles, and 4 bookings are included for testing.
-
-## Query Results
-
-- Query 1: Shows 4 bookings with customer and vehicle details
-- Query 2: Shows 2 vehicles that have no bookings
-- Query 3: Shows 1 available car
-- Query 4: Shows vehicles with more than 2 bookings
+Just run the queries.sql file in any SQL editor. It will create database, tables. Then insert data and run all queries.
